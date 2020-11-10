@@ -13,8 +13,8 @@ end
 # see https://get.k3s.io/
 # see https://update.k3s.io/v1-release/channels
 # see https://github.com/rancher/k3s/releases
-k3s_channel = 'latest'
-k3s_version = 'v1.19.2+k3s1'
+k3s_channel = 'stable'
+k3s_version = 'v1.18.10+k3s2'
 # see https://github.com/helm/helm/releases
 helm_version = 'v3.3.4'
 # see https://github.com/kubernetes/dashboard/releases
@@ -39,7 +39,8 @@ agent_node_ip_address   = IPAddr.new first_agent_node_ip
 k3s_token               = get_or_generate_k3s_token
 
 Vagrant.configure(2) do |config|
-  config.vm.box = 'debian-10-amd64'
+  #config.vm.box = 'debian-10-amd64'
+  config.vm.box = 'generic/ubuntu1804'
 
   config.vm.provider 'libvirt' do |lv, config|
     lv.cpus = 2
@@ -53,6 +54,8 @@ Vagrant.configure(2) do |config|
     vb.linked_clone = true
     vb.cpus = 2
   end
+
+  config.vm.synced_folder '.', '/vagrant', disabled: false
 
   (1..number_of_server_nodes).each do |n|
     name = "s#{n}"
@@ -71,11 +74,11 @@ Vagrant.configure(2) do |config|
       config.vm.provision 'hosts', :sync_hosts => true, :add_localhost_hostnames => false
       config.vm.provision 'shell', path: 'provision-base.sh'
       config.vm.provision 'shell', path: 'provision-k3s-server.sh', args: [
-        k3s_channel,
-        k3s_version,
-        k3s_token,
-        ip_address,
-        krew_version
+       k3s_channel,
+       k3s_version,
+       k3s_token,
+       ip_address,
+       krew_version
       ]
       config.vm.provision 'shell', path: 'provision-helm.sh', args: [helm_version] # NB this might not really be needed, as rancher has a HelmChart CRD.
       config.vm.provision 'shell', path: 'provision-k8s-dashboard.sh', args: [k8s_dashboard_version]
@@ -101,32 +104,13 @@ Vagrant.configure(2) do |config|
       config.vm.provision 'hosts', :sync_hosts => true, :add_localhost_hostnames => false
       config.vm.provision 'shell', path: 'provision-base.sh'
       config.vm.provision 'shell', path: 'provision-k3s-agent.sh', args: [
-        k3s_channel,
-        k3s_version,
-        k3s_token,
-        "https://s1.example.test:6443",
-        ip_address
+       k3s_channel,
+       k3s_version,
+       k3s_token,
+       "https://s1.example.test:6443",
+       ip_address
       ]
     end
   end
 
-  config.trigger.before :up do |trigger|
-    trigger.only_on = 's1'
-    trigger.run = {
-      inline: '''bash -euc \'
-mkdir -p tmp
-artifacts=(
-  ../gitlab-vagrant/tmp/gitlab.example.com-crt.pem
-  ../gitlab-vagrant/tmp/gitlab.example.com-crt.der
-  ../gitlab-vagrant/tmp/gitlab-runners-registration-token.txt
-)
-for artifact in "${artifacts[@]}"; do
-  if [ -f $artifact ]; then
-    cp $artifact tmp
-  fi
-done
-\'
-'''
-    }
-  end
 end

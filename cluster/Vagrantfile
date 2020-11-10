@@ -1,0 +1,86 @@
+# to make sure the nodes are created in order, we
+# have to force a --no-parallel execution.
+ENV['VAGRANT_NO_PARALLEL'] = 'yes'
+
+require 'ipaddr'
+
+def get_or_generate_k3s_token
+  # TODO generate an unique random an cache it.
+  # generated with openssl rand -hex 32
+  '0317bd3ef102755562875a2e016ed0726779c65e5d5ddc0247d34aaf0d725835'
+end
+
+# see https://get.k3s.io/
+# see https://update.k3s.io/v1-release/channels
+# see https://github.com/rancher/k3s/releases
+k3s_channel = 'latest'
+k3s_version = 'v1.18.10+k3s2'
+# see https://github.com/helm/helm/releases
+helm_version = 'v3.3.4'
+# see https://github.com/kubernetes/dashboard/releases
+k8s_dashboard_version = 'v2.0.4'
+# see https://github.com/derailed/k9s/releases
+k9s_version = 'v0.22.1'
+# see https://github.com/kubernetes-sigs/krew/releases
+krew_version = 'v0.4.0'
+# see https://gitlab.com/gitlab-org/charts/gitlab-runner/-/tags
+gitlab_runner_chart_version = '0.21.1'
+# link to the gitlab-vagrant environment (https://github.com/rgl/gitlab-vagrant running at ../gitlab-vagrant).
+gitlab_fqdn = 'gitlab.example.com'
+gitlab_ip = '10.10.9.99'
+
+number_of_server_nodes  = 1
+number_of_agent_nodes   = 0
+first_server_node_ip    = '10.11.0.101'
+first_agent_node_ip     = '10.11.0.201'
+
+server_node_ip_address  = IPAddr.new first_server_node_ip
+agent_node_ip_address   = IPAddr.new first_agent_node_ip
+k3s_token               = get_or_generate_k3s_token
+
+Vagrant.configure(2) do |config|
+    #config.vm.box = 'generic/debian10'
+    #config.vm.box = 'generic/ubuntu1804'
+    config.vm.box = 'hashicorp/bionic64'
+
+    config.vm.boot_timeout = 1200
+    # Customize the disk size on the guest VM: (using vagrant-disksize plugin)
+    config.disksize.size = '80GB'
+
+    config.ssh.insert_key = false
+
+    config.vm.provider 'virtualbox' do |vb|
+        vb.linked_clone = true
+        vb.cpus = 2
+    end
+
+    (1..number_of_server_nodes).each do |n|
+        name = "s#{n}"
+        fqdn = "#{name}.example.test"
+        ip_address = server_node_ip_address.to_s; server_node_ip_address = server_node_ip_address.succ
+
+        config.vm.define name do |config|
+            config.vm.provider 'virtualbox' do |vb|
+                vb.memory = 2048
+            end
+            config.vm.hostname = fqdn
+            config.vm.network :private_network, ip: ip_address
+            config.vm.provision 'hosts', :sync_hosts => true, :add_localhost_hostnames => false
+        end
+    end
+
+    (1..number_of_agent_nodes).each do |n|
+        name = "a#{n}"
+        fqdn = "#{name}.example.test"
+        ip_address = agent_node_ip_address.to_s; agent_node_ip_address = agent_node_ip_address.succ
+
+        config.vm.define name do |config|
+            config.vm.provider 'virtualbox' do |vb|
+                vb.memory = 1*1024
+            end
+            config.vm.hostname = fqdn
+            config.vm.network :private_network, ip: ip_address
+            config.vm.provision 'hosts', :sync_hosts => true, :add_localhost_hostnames => false
+        end
+    end
+end
