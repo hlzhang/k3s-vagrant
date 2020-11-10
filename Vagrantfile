@@ -40,6 +40,8 @@ k3s_token               = get_or_generate_k3s_token
 
 Vagrant.configure(2) do |config|
   #config.vm.box = 'debian-10-amd64'
+  #config.vm.box = 'debian/buster64'
+  #config.vm.box = 'generic/ubuntu1804'
   config.vm.box = 'generic/debian10'
 
   config.vm.provider 'libvirt' do |lv, config|
@@ -55,6 +57,8 @@ Vagrant.configure(2) do |config|
     vb.cpus = 2
   end
 
+  config.vm.synced_folder '.', '/vagrant', disabled: false
+
   (1..number_of_server_nodes).each do |n|
     name = "s#{n}"
     fqdn = "#{name}.example.com"
@@ -62,26 +66,29 @@ Vagrant.configure(2) do |config|
 
     config.vm.define name do |config|
       config.vm.provider 'libvirt' do |lv, config|
-        lv.memory = 1024
+        lv.memory = 4096
       end
       config.vm.provider 'virtualbox' do |vb|
-        vb.memory = 1024
+        vb.memory = 4096
       end
       config.vm.hostname = fqdn
       config.vm.network :private_network, ip: ip_address, libvirt__forward_mode: 'none', libvirt__dhcp_enabled: false
       config.vm.provision 'hosts', :sync_hosts => true, :add_localhost_hostnames => false
       config.vm.provision 'shell', path: 'provision-base.sh'
       config.vm.provision 'shell', path: 'provision-k3s-server.sh', args: [
-        k3s_channel,
-        k3s_version,
-        k3s_token,
-        ip_address,
-        krew_version
+       k3s_channel,
+       k3s_version,
+       k3s_token,
+       ip_address
+      ]
+      config.vm.provision 'shell', path: 'provision-k3s-server-post.sh', args: [
+       k3s_version,
+       krew_version
       ]
       config.vm.provision 'shell', path: 'provision-helm.sh', args: [helm_version] # NB this might not really be needed, as rancher has a HelmChart CRD.
       config.vm.provision 'shell', path: 'provision-k8s-dashboard.sh', args: [k8s_dashboard_version]
       config.vm.provision 'shell', path: 'provision-k9s.sh', args: [k9s_version]
-      config.vm.provision 'shell', path: 'provision-gitlab-runner.sh', args: [gitlab_runner_chart_version, gitlab_fqdn, gitlab_ip]
+      # config.vm.provision 'shell', path: 'provision-gitlab-runner.sh', args: [gitlab_runner_chart_version, gitlab_fqdn, gitlab_ip]
     end
   end
 
@@ -92,10 +99,10 @@ Vagrant.configure(2) do |config|
 
     config.vm.define name do |config|
       config.vm.provider 'libvirt' do |lv, config|
-        lv.memory = 1*1024
+        lv.memory = 2*1024
       end
       config.vm.provider 'virtualbox' do |vb|
-        vb.memory = 1*1024
+        vb.memory = 2*1024
       end
       config.vm.hostname = fqdn
       config.vm.network :private_network, ip: ip_address, libvirt__forward_mode: 'none', libvirt__dhcp_enabled: false
@@ -108,26 +115,8 @@ Vagrant.configure(2) do |config|
         "https://s1.example.com:6443",
         ip_address
       ]
+      config.vm.provision 'shell', path: 'provision-k3s-agent-post.sh'
     end
   end
 
-  config.trigger.before :up do |trigger|
-    trigger.only_on = 's1'
-    trigger.run = {
-      inline: '''bash -euc \'
-mkdir -p tmp
-artifacts=(
-  ../gitlab-vagrant/tmp/gitlab.example.com-crt.pem
-  ../gitlab-vagrant/tmp/gitlab.example.com-crt.der
-  ../gitlab-vagrant/tmp/gitlab-runners-registration-token.txt
-)
-for artifact in "${artifacts[@]}"; do
-  if [ -f $artifact ]; then
-    cp $artifact tmp
-  fi
-done
-\'
-'''
-    }
-  end
 end
