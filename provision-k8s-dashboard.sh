@@ -42,11 +42,11 @@ kubectl \
   -o json | jq -r .data.token | base64 --decode \
   >/vagrant/tmp/admin-token.txt
 
-# expose the kubernetes dashboard at kubernetes-dashboard.example.test.
+# expose the kubernetes dashboard at kubernetes-dashboard.example.com.
 # NB you must add any of the cluster node IP addresses to your computer hosts file, e.g.:
-#       10.10.10.101 kubernetes-dashboard.example.test
+#       10.10.10.101 kubernetes-dashboard.example.com
 #    and access it as:
-#       https://kubernetes-dashboard.example.test
+#       https://kubernetes-dashboard.example.com
 # see kubectl get -n kubernetes-dashboard service/kubernetes-dashboard -o yaml
 # see https://docs.traefik.io/providers/kubernetes-ingress/
 # see https://docs.traefik.io/routing/providers/kubernetes-crd/
@@ -64,7 +64,7 @@ spec:
     #       kubectl --namespace kube-system get $(kubectl --namespace kube-system get pods -l app=traefik -o name) -o yaml
     #       kubectl --namespace kube-system get configMap/traefik -o yaml
     #       kubectl --namespace kube-system logs $(kubectl --namespace kube-system get pods -l app=traefik -o name)
-    - host: kubernetes-dashboard.example.test
+    - host: kubernetes-dashboard.example.com
       http:
         paths:
           - path: /

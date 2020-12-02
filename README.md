@@ -4,9 +4,9 @@
 Configure your hosts file with:
 
 ```
-10.11.0.101 s1.example.test
-10.11.0.101 traefik-dashboard.example.test
-10.11.0.101 kubernetes-dashboard.example.test
+10.11.0.101 s1.example.com
+10.11.0.101 traefik-dashboard.example.com
+10.11.0.101 kubernetes-dashboard.example.com
 ```
 
 Install the base [debian vagrant box](https://github.com/rgl/debian-vagrant).
@@ -29,13 +29,13 @@ time vagrant up --no-destroy-on-error --no-tty --provider=libvirt # or --provide
 
 Access the Traefik Dashboard at:
 
-    http://traefik-dashboard.example.test
+    http://traefik-dashboard.example.com
 
 ## Rancher Server
 
 Access the Rancher Server at:
 
-    https://s1.example.test:6443
+    https://s1.example.com:6443
 
 **NB** This is a proxy to the k8s API server (which is running in port 6444).
 
@@ -49,7 +49,7 @@ http \
     --verify tmp/default-ca-crt.pem \
     --cert tmp/default-crt.pem \
     --cert-key tmp/default-key.pem \
-    https://s1.example.test:6443
+    https://s1.example.com:6443
 ```
 
 Or with curl:
@@ -59,7 +59,7 @@ curl \
     --cacert tmp/default-ca-crt.pem \
     --cert tmp/default-crt.pem \
     --key tmp/default-key.pem \
-    https://s1.example.test:6443
+    https://s1.example.com:6443
 ```
 
 ## Kubernetes Dashboard
@@ -79,7 +79,7 @@ Then select `Token` and use the contents of `tmp/admin-token.txt` as the token.
 
 Instead of using the kubectl proxy, you can also access the Kubernetes Dashboard at:
 
-    https://kubernetes-dashboard.example.test
+    https://kubernetes-dashboard.example.com
 
 ## K9s Dashboard
 

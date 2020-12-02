@@ -61,7 +61,7 @@ $SHELL -c 'while [ -z "$(kubectl get pods --selector k8s-app=kube-dns --namespac
 # see https://github.com/rancher/k3s/blob/v1.19.3+k3s2/scripts/download#L16
 # see https://github.com/helm/charts/tree/master/stable/traefik
 # see https://kubernetes-charts.storage.googleapis.com/traefik-1.81.0.tgz
-echo 'patching traefik to expose its api/dashboard at http://traefik-dashboard.example.test...'
+echo 'patching traefik to expose its api/dashboard at http://traefik-dashboard.example.com...'
 wget -q https://raw.githubusercontent.com/rancher/k3s/$k3s_version/manifests/traefik.yaml
 apt-get install -y python3-yaml
 python3 - <<'EOF'
@@ -77,10 +77,10 @@ d = yaml.load(config_orig)
 values = yaml.load(d['spec']['valuesContent'])
 values['dashboard'] = {}
 values['dashboard']['enabled'] = True
-values['dashboard']['domain'] = 'traefik-dashboard.example.test'
+values['dashboard']['domain'] = 'traefik-dashboard.example.com'
 
 # re-configure traefik to skip certificate validation.
-# NB this is needed to expose the k8s dashboard as an ingress at https://kubernetes-dashboard.example.test.
+# NB this is needed to expose the k8s dashboard as an ingress at https://kubernetes-dashboard.example.com.
 #    TODO see how to set the CAs in traefik.
 # NB this should never be done at production.
 values['ssl']['insecureSkipVerify'] = True
@@ -98,7 +98,7 @@ sys.stdout.writelines(difflib.unified_diff(config_orig.splitlines(1), config.spl
 open('traefik.yaml', 'w', encoding='utf-8').write(config)
 EOF
 kubectl -n kube-system apply -f traefik.yaml
-rm traefik.yaml
+#rm traefik.yaml
 
 # wait for the svclb-traefik pod to be Running.
 # e.g. eca1ea99515cd       About an hour ago   Ready               svclb-traefik-kz562   kube-system         0

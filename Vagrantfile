@@ -39,7 +39,8 @@ agent_node_ip_address   = IPAddr.new first_agent_node_ip
 k3s_token               = get_or_generate_k3s_token
 
 Vagrant.configure(2) do |config|
-  config.vm.box = 'debian-10-amd64'
+  #config.vm.box = 'debian-10-amd64'
+  config.vm.box = 'generic/debian10'
 
   config.vm.provider 'libvirt' do |lv, config|
     lv.cpus = 2
@@ -56,7 +57,7 @@ Vagrant.configure(2) do |config|
 
   (1..number_of_server_nodes).each do |n|
     name = "s#{n}"
-    fqdn = "#{name}.example.test"
+    fqdn = "#{name}.example.com"
     ip_address = server_node_ip_address.to_s; server_node_ip_address = server_node_ip_address.succ
 
     config.vm.define name do |config|
@@ -86,7 +87,7 @@ Vagrant.configure(2) do |config|
 
   (1..number_of_agent_nodes).each do |n|
     name = "a#{n}"
-    fqdn = "#{name}.example.test"
+    fqdn = "#{name}.example.com"
     ip_address = agent_node_ip_address.to_s; agent_node_ip_address = agent_node_ip_address.succ
 
     config.vm.define name do |config|
@@ -104,7 +105,7 @@ Vagrant.configure(2) do |config|
         k3s_channel,
         k3s_version,
         k3s_token,
-        "https://s1.example.test:6443",
+        "https://s1.example.com:6443",
         ip_address
       ]
     end
