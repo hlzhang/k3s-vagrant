@@ -53,6 +53,7 @@ Vagrant.configure(2) do |config|
   config.vm.provider 'virtualbox' do |vb|
     vb.linked_clone = true
     vb.cpus = 2
+    config.vm.synced_folder '.', '/vagrant', disabled: false
   end
 
   (1..number_of_server_nodes).each do |n|
